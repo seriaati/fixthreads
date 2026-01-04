@@ -143,15 +143,17 @@ async function findPost({
   let imgType = "";
   let hasReel = false;
   if (postObj.post.carousel_media && postObj.post.carousel_media.length > 0) {
-    images = postObj.post.carousel_media.map((item: any) => {
-      if (item.video_versions !== null && item.video_versions.length > 0) {
-        vidData.push({ url: item.video_versions[0].url, type: "instagram" });
-        return;
-      }
-      return {
-        url: item.image_versions2.candidates[0].url,
-      };
-    });
+    images = postObj.post.carousel_media
+      .map((item: any) => {
+        if (item.video_versions !== null && item.video_versions.length > 0) {
+          vidData.push({ url: item.video_versions[0].url, type: "instagram" });
+          return null;
+        }
+        return {
+          url: item.image_versions2.candidates[0].url,
+        };
+      })
+      .filter((item) => item !== null);
     imgType = "carousel";
   } else if (
     postObj.post.text_post_app_info.link_preview_attachment &&
@@ -190,7 +192,7 @@ async function findPost({
       imgType = "single";
     }
   }
-  if (hasReel) {
+  if (hasReel && postObj.post.text_post_app_info.link_preview_attachment?.url) {
     let reelId = postObj.post.text_post_app_info.link_preview_attachment.url
       .split("/reel/")[1]
       .split("/")[0];

@@ -5,6 +5,8 @@ interface ImageProps {
 interface VideoProps {
   url: string;
   type?: string;
+  width?: number;
+  height?: number;
 }
 
 interface ContentProps {

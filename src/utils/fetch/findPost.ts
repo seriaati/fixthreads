@@ -146,7 +146,7 @@ async function findPost({
     images = postObj.post.carousel_media
       .map((item: any) => {
         if (item.video_versions !== null && item.video_versions.length > 0) {
-          vidData.push({ url: item.video_versions[0].url, type: "instagram" });
+          vidData.push({ url: item.video_versions[0].url, type: "instagram", width: item.video_versions[0].width ?? undefined, height: item.video_versions[0].height ?? undefined });
           return null;
         }
         return {
@@ -212,6 +212,8 @@ async function findPost({
         return {
           url: item.url,
           type: item.type,
+          width: item.width,
+          height: item.height,
         };
       });
     } else {
@@ -220,6 +222,8 @@ async function findPost({
           {
             url: postObj.post.video_versions[0].url,
             type: "instagram",
+            width: postObj.post.video_versions[0].width ?? undefined,
+            height: postObj.post.video_versions[0].height ?? undefined,
           },
         ];
       }

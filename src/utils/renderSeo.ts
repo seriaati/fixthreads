@@ -71,16 +71,16 @@ export default function renderSeo({ type, content }: DataProps) {
             : `
             <meta name="twitter:card" content="player" />
             <meta name="twitter:player" content="${videoURL}" />
-            <meta name="twitter:player:width" content="1280" />
-            <meta name="twitter:player:height" content="720" />
+            ${content.video[0].width ? `<meta name="twitter:player:width" content="${content.video[0].width}" />` : ""}
+            ${content.video[0].height ? `<meta name="twitter:player:height" content="${content.video[0].height}" />` : ""}
             <meta name="twitter:player:stream" content="${videoURL}" />
             <meta name="twitter:player:stream:content_type" content="video/mp4" />
             <meta property="og:video" content="${videoURL}">
             <meta property="og:video:url" content="${videoURL}">
             <meta property="og:video:secure_url" content="${videoURL}">
             <meta property="og:video:type" content="video/mp4">
-            <meta property="og:video:width" content="1280">
-            <meta property="og:video:height" content="720">
+            ${content.video[0].width ? `<meta property="og:video:width" content="${content.video[0].width}">` : ""}
+            ${content.video[0].height ? `<meta property="og:video:height" content="${content.video[0].height}">` : ""}
             ${content.images && content.images.length > 0
               ? `<meta property="og:image" content="${content.images[0].url}" />
             <meta name="twitter:image" content="${content.images[0].url}" />`

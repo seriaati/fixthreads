@@ -1,6 +1,6 @@
 {
   "name": "fixthreads",
-  "version": "1.7.6",
+  "version": "1.7.7",
   "main": "index.ts",
   "scripts": {
     "start": "tsx ./src/index.ts",
@@ -11,9 +11,9 @@
   "dependencies": {
     "cloudflare-express": "^1.0.1",
     "cors": "^2.8.5",
-    "dotenv": "^17.0.0",
+    "dotenv": "^17.2.3",
     "escape-html": "^1.0.3",
-    "express": "^5.0.0",
+    "express": "^5.2.1",
     "express-rate-limit": "8.2.1",
     "instagram-private-api": "^1.46.1",
     "node-fetch": "^3.3.2",
@@ -21,17 +21,17 @@
     "tsx": "4.21.0"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
+    "@types/cors": "^2.8.19",
     "@types/escape-html": "^1.0.4",
-    "@types/express": "^5.0.0",
-    "gts": "^6.0.2",
-    "typescript": "^5.8.2"
+    "@types/express": "^5.0.6",
+    "gts": "^7.0.0",
+    "typescript": "^5.9.3"
   },
   "typeRoots": [
     "./node_modules/@types",
     "./src/types"
   ],
-  "packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501",
+  "packageManager": "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264",
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"

@@ -1,6 +1,6 @@
 node_modules
 cloudflare.yaml
 .env
-
+.git
 config
 generated

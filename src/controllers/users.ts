@@ -1,33 +1,23 @@
 import express from "express";
-import { HttpError } from "../utils/utils";
 import findUser from "../utils/fetch/findUser";
 import renderSeo from "../utils/renderSeo";
 const router = express.Router();
 
-router.get("/@:username", async (req, res, next) => {
+router.get("/@:username", async (req, res, _next) => {
+  const { username } = req.params;
   try {
-    if (!req.params.username)
-      return next(new HttpError(400, "No user provided"));
-
     const user = await findUser({
-      username: req.params.username,
+      username,
       userAgent: req.headers["user-agent"] || "",
     });
     if (!user || !user.title) {
-      return next(new HttpError(404, "User not found"));
+      console.log(`[NOT FOUND] username=${username}`);
+      return res.redirect(`https://www.threads.com/@${username}`);
     }
-
-    return res.send(
-      renderSeo({
-        type: "user",
-        content: user,
-      })
-    );
+    return res.send(renderSeo({ type: "user", content: user }));
   } catch (e: any) {
-    res.status(500).json({
-      error: true,
-      message: e.message,
-    });
+    console.error(`[ERROR] username=${username}`, e?.message ?? e);
+    return res.redirect(`https://www.threads.com/@${username}`);
   }
 });
 

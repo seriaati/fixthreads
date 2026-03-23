@@ -1,58 +1,46 @@
 import express from "express";
-import { HttpError } from "../utils/utils";
 import findPost from "../utils/fetch/findPost";
 import renderSeo from "../utils/renderSeo";
 const router = express.Router();
 
-router.get("/t/:post", async (req, res, next) => {
-  try {
-    if (!req.params.post) return next(new HttpError(400, "No post provided"));
+function threadsPostUrl(username: string | undefined, post: string) {
+  if (username) return `https://www.threads.com/@${username}/post/${post}`;
+  return `https://www.threads.com/t/${post}`;
+}
 
-    const post = await findPost({
-      post: req.params.post,
+router.get("/t/:post", async (req, res, _next) => {
+  const { post } = req.params;
+  try {
+    const data = await findPost({
+      post,
       userAgent: req.headers["user-agent"] || "",
     });
-    if (!post || !post.title) {
-      return next(new HttpError(404, "Post not found"));
+    if (!data || !data.title) {
+      console.log(`[NOT FOUND] post=${post}`);
+      return res.redirect(threadsPostUrl(undefined, post));
     }
-
-    return res.send(
-      renderSeo({
-        type: "post",
-        content: post,
-      })
-    );
+    return res.send(renderSeo({ type: "post", content: data }));
   } catch (e: any) {
-    res.status(500).json({
-      error: true,
-      message: e.message,
-    });
+    console.error(`[ERROR] post=${post}`, e?.message ?? e);
+    return res.redirect(threadsPostUrl(undefined, post));
   }
 });
 
-router.get("/:username/post/:post", async (req, res, next) => {
+router.get("/:username/post/:post", async (req, res, _next) => {
+  const { username, post } = req.params;
   try {
-    if (!req.params.post) return next(new HttpError(400, "No post provided"));
-
-    const post = await findPost({
-      post: req.params.post,
+    const data = await findPost({
+      post,
       userAgent: req.headers["user-agent"] || "",
     });
-    if (!post || !post.title) {
-      return next(new HttpError(404, "Post not found"));
+    if (!data || !data.title) {
+      console.log(`[NOT FOUND] username=${username} post=${post}`);
+      return res.redirect(threadsPostUrl(username, post));
     }
-
-    const seo = renderSeo({
-      type: "post",
-      content: post,
-    });
-
-    return res.send(seo);
+    return res.send(renderSeo({ type: "post", content: data }));
   } catch (e: any) {
-    res.status(500).json({
-      error: true,
-      message: e.message,
-    });
+    console.error(`[ERROR] username=${username} post=${post}`, e?.message ?? e);
+    return res.redirect(threadsPostUrl(username, post));
   }
 });
 

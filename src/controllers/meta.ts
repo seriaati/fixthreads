@@ -17,7 +17,7 @@ router.get("/oembed", async (req, res, next) => {
       provider_name: req.query.videoText
         ? (req.query.videoText as string)
         : GlobalVars.name,
-      provider_url: "https://github.com/milanmdev/fixthreads",
+      provider_url: "https://github.com/seriaati/fixthreads",
       title: "Threads",
       type: "link",
       version: "1.0",

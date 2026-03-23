@@ -38,7 +38,7 @@ app.use((err: any, _req: Request, res: Response, _next: Function) => {
 
 app.get("/", async (_req: Request, res: Response, _next: Function) => {
   try {
-    res.status(301).redirect("https://github.com/milanmdev/fixthreads");
+    res.status(301).redirect("https://github.com/seriaati/fixthreads");
   } catch (e: any) {
     res.status(500).json({
       error: true,

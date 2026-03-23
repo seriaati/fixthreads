@@ -1,16 +1,11 @@
-# ARCHIVED
-This project has now been archived. Between Meta/Instagram/Threads blocking my accounts (to fetch posts) and Threads now having better metadata natively, it makes more sense to archive this site. Thanks for all the support!
-
 # FixThreads - Consistent Embedding of Metadata for Threads
 
-Fixes Meta's Threads metadata for sites like Discord, Telegram, etc.
-
-[Documentation](https://docs.milanm.org/books/fixthreads/page/introduction)
+This is a fork by [seriaati](https://github.com/seriaati) that will continue to receive updates and bug fixes for the original project, [FixThreads](https://github.com/milanmdev/fixthreads). Mainly because [Embed Fixer](https://ef.seria.moe) still uses it.
 
 ## Usage
 
-When you send a `threads.net` link, prepend `fix` to make `fixthreads.net` and then send it.
+Replace `threads.net` or `threads.com` with `fixthreads.seria.moe`. Yes, this is difficult to do manually, which is why using Embed Fixer is recommended.
 
 ## Support
 
-If you need support, feel free to reach out to me via email @ [milan@milanm.org](mailto:milan@milanm.org) or join the [Discord server](https://discord.gg/aZCMEnp3CP).
+If you need support, feel free to reach out to me via email @ [hi@seria.moe](mailto:hi@seria.moe) or join the [Discord server](https://link.seria.moe/hb-dc).

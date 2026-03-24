@@ -1,6 +1,9 @@
-import { IgApiClient } from "instagram-private-api";
-import users from "../../../config/users.json";
 import fs from "node:fs";
+
+const usersPath = __dirname + "/../../../config/users.json";
+const users: { username: string; password: string; deviceId?: string }[] = fs.existsSync(usersPath)
+  ? JSON.parse(fs.readFileSync(usersPath, "utf-8"))
+  : [];
 import { ThreadsAPI } from "threads-api";
 
 let tokenStore = {

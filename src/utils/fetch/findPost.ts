@@ -164,9 +164,15 @@ async function findPost({
       postObj.post.text_post_app_info.link_preview_attachment.url.includes(
         "instagram.com/reel"
       )
-    )
+    ) {
       hasReel = true;
-    else {
+      images = [
+        {
+          url: postObj.post.text_post_app_info.link_preview_attachment.image_url,
+        },
+      ];
+      imgType = "carousel";
+    } else {
       images = [
         {
           url: postObj.post.text_post_app_info.link_preview_attachment
@@ -198,7 +204,7 @@ async function findPost({
       .split("/")[0];
     if (reelId) {
       vidData.push({
-        url: `https://d.ddinstagram.com/reel/${reelId}/`,
+        url: `https://kkinstagram.com/reel/${reelId}/`,
         type: "ddinstagram",
       });
     }

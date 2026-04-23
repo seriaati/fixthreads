@@ -15,20 +15,19 @@ let failedCredentials: string[] = [];
 let runningLogin = false;
 let hasReadTokenFile = false;
 
+const generatedDir = __dirname + "/../../../generated";
+const tokenFilePath = generatedDir + "/token.json";
+
 function readTokenFile() {
-  let tokenFile = fs.readFileSync(
-    __dirname + "/../../../generated/token.json",
-    "utf-8"
-  );
+  if (!fs.existsSync(tokenFilePath)) return;
+  let tokenFile = fs.readFileSync(tokenFilePath, "utf-8");
   let tokenFileJson = JSON.parse(tokenFile);
   tokenStore = tokenFileJson;
 }
 
 function writeTokenFile() {
-  fs.writeFileSync(
-    __dirname + "/../../../generated/token.json",
-    JSON.stringify(tokenStore)
-  );
+  fs.mkdirSync(generatedDir, { recursive: true });
+  fs.writeFileSync(tokenFilePath, JSON.stringify(tokenStore));
 }
 
 /*async function runIgLogin() {

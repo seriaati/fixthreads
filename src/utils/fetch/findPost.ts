@@ -1,5 +1,10 @@
 import fetch from "node-fetch";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { login, refreshToken } from "./igLogin";
+
+const proxyAgent = process.env.API_PROXY
+  ? new HttpsProxyAgent(process.env.API_PROXY)
+  : undefined;
 
 async function findPost({
   post,
@@ -46,6 +51,7 @@ async function findPost({
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: finalFormBody,
+    agent: proxyAgent,
   });
   let fetchThreadsAPIJson: any = await fetchThreadsAPI.json();
 
@@ -76,6 +82,7 @@ async function findPost({
               Authorization: newToken.token ? newToken.token : "",
             },
             body: finalFormBody,
+            agent: proxyAgent,
           });
           fetchThreadsAPIJson = await fetchWithAuth.json();
         }

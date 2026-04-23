@@ -15,6 +15,7 @@
     "escape-html": "^1.0.3",
     "express": "^5.2.1",
     "express-rate-limit": "8.2.1",
+    "https-proxy-agent": "^9.0.0",
     "instagram-private-api": "^1.46.1",
     "node-fetch": "^3.3.2",
     "threads-api": "^1.6.3",

@@ -133,3 +133,5 @@ cloudflare.yaml
 
 config/users.json
 generated/*
+# Serena tool metadata
+.serena/

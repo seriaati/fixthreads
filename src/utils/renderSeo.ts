@@ -9,7 +9,7 @@ export default function renderSeo({ type, content }: DataProps) {
     return "No type/content provided - this is not expected so if you're a client, report this to milan@milanm.org";
   }
 
-  let url = `https://www.threads.com/${content.username}${
+  let url = `https://www.threads.com/@${content.username}${
     content.post ? `/post/${content.post}` : ""
   }`;
 

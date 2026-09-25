@@ -249,12 +249,12 @@ async function findPost({
     caption: "",
     quoted: false,
   };
-  if (postObj.post.text_post_app_info.share_info.quoted_post != null) {
+  // quoted_post.user (and caption) are null when the quoted post is unavailable
+  const rawQuoted = postObj.post.text_post_app_info.share_info.quoted_post;
+  if (rawQuoted != null && rawQuoted.user != null) {
     quotedPost = {
-      username:
-        postObj.post.text_post_app_info.share_info.quoted_post.user.username,
-      caption:
-        postObj.post.text_post_app_info.share_info.quoted_post.caption.text,
+      username: rawQuoted.user.username,
+      caption: rawQuoted.caption?.text ?? "",
       quoted: true,
     };
 

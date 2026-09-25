@@ -6,6 +6,24 @@ const proxyAgent = process.env.API_PROXY
   ? new HttpsProxyAgent(process.env.API_PROXY)
   : undefined;
 
+/* Ordered list of a post's own media (carousel items, single video or single image) */
+function extractMedia(post: any): MediaItem[] {
+  if (post.carousel_media && post.carousel_media.length > 0) {
+    return post.carousel_media.map((item: any) =>
+      item.video_versions && item.video_versions.length > 0
+        ? { url: item.video_versions[0].url, kind: "video" }
+        : { url: item.image_versions2.candidates[0].url, kind: "image" }
+    );
+  }
+  if (post.video_versions && post.video_versions.length > 0) {
+    return [{ url: post.video_versions[0].url, kind: "video" }];
+  }
+  if (post.image_versions2?.candidates?.length > 0) {
+    return [{ url: post.image_versions2.candidates[0].url, kind: "image" }];
+  }
+  return [];
+}
+
 async function findPost({
   post,
   userAgent,
@@ -122,6 +140,10 @@ async function findPost({
     index++;
     if (item.post.code == post) return item;
   })[0];
+  const postIndex = thread_items.findIndex(
+    (item: any) => item.post.code == post
+  );
+  const parentPost = postIndex > 0 ? thread_items[postIndex - 1].post : null;
 
   /* Handle Captions */
   let caption;
@@ -251,11 +273,20 @@ async function findPost({
   };
   // quoted_post.user (and caption) are null when the quoted post is unavailable
   const rawQuoted = postObj.post.text_post_app_info.share_info.quoted_post;
-  if (rawQuoted != null && rawQuoted.user != null) {
+  if (rawQuoted != null && rawQuoted.user == null) {
+    quotedPost = { username: "", caption: "", quoted: false, unavailable: true };
+  } else if (rawQuoted != null) {
     quotedPost = {
       username: rawQuoted.user.username,
       caption: rawQuoted.caption?.text ?? "",
       quoted: true,
+      verified: rawQuoted.user.is_verified ?? false,
+      avatar: rawQuoted.user.profile_pic_url,
+      code: rawQuoted.code,
+      likeCount: rawQuoted.like_count ?? 0,
+      replyCount: rawQuoted.text_post_app_info?.direct_reply_count ?? 0,
+      takenAt: rawQuoted.taken_at,
+      media: extractMedia(rawQuoted),
     };
 
     description =
@@ -275,6 +306,24 @@ async function findPost({
     oembedStat,
     quotedPost,
     userAgent,
+    // Components V2 embed data
+    caption: postObj.post.caption != null ? postObj.post.caption.text : "",
+    avatar: postObj.post.user.profile_pic_url,
+    verified: postObj.post.user.is_verified ?? false,
+    media: extractMedia(postObj.post),
+    likeCount: postObj.post.like_count ?? 0,
+    replyCount: postObj.post.text_post_app_info.direct_reply_count ?? 0,
+    takenAt: postObj.post.taken_at,
+    edited: postObj.post.caption_is_edited ?? false,
+    paidPartnership: postObj.post.is_paid_partnership ?? false,
+    replyTo: parentPost
+      ? {
+          username: parentPost.user.username,
+          verified: parentPost.user.is_verified ?? false,
+          code: parentPost.code,
+          caption: parentPost.caption != null ? parentPost.caption.text : "",
+        }
+      : undefined,
   };
 
   return returnJson;

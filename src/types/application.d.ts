@@ -9,6 +9,18 @@ interface VideoProps {
   height?: number;
 }
 
+interface MediaItem {
+  url: string;
+  kind: "image" | "video";
+}
+
+interface ReplyToProps {
+  username: string;
+  verified: boolean;
+  code: string;
+  caption: string;
+}
+
 interface ContentProps {
   description: string;
   title: string;
@@ -20,6 +32,22 @@ interface ContentProps {
   oembedStat: string;
   quotedPost?: QuotedPostProps;
   userAgent: string;
+  // Components V2 embed data (shared)
+  avatar?: string;
+  verified?: boolean;
+  // Components V2 embed data (posts)
+  caption?: string;
+  media?: MediaItem[];
+  likeCount?: number;
+  replyCount?: number;
+  takenAt?: number;
+  edited?: boolean;
+  paidPartnership?: boolean;
+  replyTo?: ReplyToProps;
+  // Components V2 embed data (users)
+  fullName?: string;
+  followerCount?: number;
+  bioLink?: string;
 }
 
 interface DataProps {
@@ -41,4 +69,12 @@ interface QuotedPostProps {
   username: string;
   caption: string;
   quoted: boolean;
+  unavailable?: boolean;
+  verified?: boolean;
+  avatar?: string;
+  code?: string;
+  likeCount?: number;
+  replyCount?: number;
+  takenAt?: number;
+  media?: MediaItem[];
 }

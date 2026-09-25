@@ -1,4 +1,5 @@
 import { GlobalVars } from "./utils";
+import renderComponentEmbed from "./renderComponentEmbed";
 import escape from "escape-html";
 
 let proxies = process.env.PROXIES?.split(",") || [];
@@ -13,6 +14,14 @@ export default function renderSeo({ type, content }: DataProps) {
   }`;
 
   let proxy = proxies[Math.floor(Math.random() * proxies.length)];
+
+  // Discord Components V2 link preview; built before description is escaped/truncated below
+  const componentEmbed = renderComponentEmbed({ type, content }, proxy);
+  const componentEmbedTag = componentEmbed
+    ? `<script id="discord:component-embed" type="application/json">${JSON.stringify(
+        componentEmbed
+      ).replace(/</g, "\\u003c")}</script>`
+    : "";
 
   let videoURL = "";
   if (content.video.length > 0) {
@@ -54,6 +63,7 @@ export default function renderSeo({ type, content }: DataProps) {
           content="${content.description}"
         />
         <meta property="og:title" content="${content.title}">
+        ${componentEmbedTag}
 
         ${
           content.video.length == 0

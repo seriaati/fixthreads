@@ -118,6 +118,12 @@ async function findUser({
     oembedStat,
     video: [],
     userAgent,
+    // Components V2 embed data
+    avatar: userObj.profile_pic_url,
+    verified: userObj.is_verified ?? false,
+    fullName: userObj.full_name,
+    followerCount: userObj.follower_count ?? 0,
+    bioLink: userObj.bio_links?.[0]?.url,
   };
 
   return returnJson;

@@ -1,10 +1,12 @@
 /* Discord Components V2 "component embed" (link preview) for posts and profiles.
    Spec: a single Container declared via <script id="discord:component-embed" type="application/json">.
-   Only link buttons, sections, text displays, thumbnails, galleries and separators are allowed. */
+   Only link buttons, sections, text displays, thumbnails, galleries and separators are allowed.
+   Discord refuses inline payloads over ~3,000 bytes ("Unable to read component embed data"), so media
+   point at short /m/<post>/<slot> redirects (see mediaSlots) and the caption fills what is left. */
 
 const THREADS = "https://www.threads.com";
 const ACCENT_COLOR = 0x000000; // Threads black
-const TEXT_BUDGET = 4000; // Discord's total text cap per message
+const MAX_BYTES = 3000; // Discord's cap on the serialized component-embed JSON
 const VERIFIED = " ✓";
 const URL_RE = /https?:\/\/[^\s<>()]+/g;
 
@@ -74,31 +76,51 @@ function section(texts: TextDisplay[], avatar?: string, alt?: string) {
   ];
 }
 
-function gallery(media: MediaItem[], proxy?: string) {
+/** Real URL of every media slot in a post's embed: a/qa = avatars, 0-9/q0-q9 = gallery items. */
+export function mediaSlots(content: ContentProps, proxy?: string) {
+  const urls: Record<string, string> = {};
+  const add = (prefix: string, media?: MediaItem[]) =>
+    media?.slice(0, 10).forEach((item, i) => {
+      urls[`${prefix}${i}`] =
+        item.kind == "video" && proxy
+          ? `https://${proxy}/${encodeURIComponent(item.url)}`
+          : item.url;
+    });
+  if (content.avatar) urls.a = content.avatar;
+  add("", content.media);
+  const quoted = content.quotedPost;
+  if (quoted?.quoted && !quoted.unavailable) {
+    if (quoted.avatar) urls.qa = quoted.avatar;
+    add("q", quoted.media);
+  }
+  return urls;
+}
+
+type SlotUrl = (slot: string, kind?: MediaItem["kind"]) => string;
+
+function gallery(media: MediaItem[], src: SlotUrl, prefix = "") {
   return {
     type: 12,
-    items: media.slice(0, 10).map((item) => ({
-      media: {
-        url:
-          item.kind == "video" && proxy
-            ? `https://${proxy}/${encodeURIComponent(item.url)}`
-            : item.url,
-      },
-    })),
+    items: media
+      .slice(0, 10)
+      .map((item, i) => ({ media: { url: src(`${prefix}${i}`, item.kind) } })),
   };
 }
 
-function textLength(node: unknown): number {
-  if (Array.isArray(node)) return node.reduce((n, x) => n + textLength(x), 0);
-  if (node && typeof node == "object") {
-    const obj = node as Component;
-    const own = obj.type == 10 ? (obj.content as string).length : 0;
-    return own + textLength(Object.values(obj));
-  }
-  return 0;
-}
+const serialize = (payload: unknown) =>
+  JSON.stringify(payload).replace(/</g, "\\u003c");
+const bytes = (s: string) => Buffer.byteLength(s, "utf8");
 
-function buildPost(content: ContentProps, proxy?: string) {
+/* Reply/quote limits, tried in order until the main caption gets at least MIN_CAPTION characters. */
+type Level = { reply: number; quote: number; quotedMedia: number };
+const LEVELS: Level[] = [
+  { reply: 150, quote: 300, quotedMedia: 10 },
+  { reply: 100, quote: 150, quotedMedia: 4 },
+  { reply: 50, quote: 80, quotedMedia: 1 },
+];
+const MIN_CAPTION = 280;
+
+function buildPost(content: ContentProps, src: SlotUrl, level: Level) {
   const postUrl = `${THREADS}/@${content.username}/post/${content.post}`;
   const profileUrl = `${THREADS}/@${content.username}`;
 
@@ -112,7 +134,7 @@ function buildPost(content: ContentProps, proxy?: string) {
     headerTexts.push(
       text(
         `-# ↩️ Replying to ${who(content.replyTo.username, content.replyTo.verified, parentUrl)}\n` +
-          quote(cut(richText(content.replyTo.caption), 200))
+          quote(cut(richText(content.replyTo.caption), level.reply))
       )
     );
   }
@@ -121,12 +143,12 @@ function buildPost(content: ContentProps, proxy?: string) {
 
   const children: Component[] = section(
     headerTexts,
-    content.avatar,
+    content.avatar && src("a"),
     `@${content.username}`
   );
 
   if (content.media && content.media.length > 0) {
-    children.push(separator(false, 2), gallery(content.media, proxy));
+    children.push(separator(false, 2), gallery(content.media, src));
   }
 
   const quoted = content.quotedPost;
@@ -143,14 +165,17 @@ function buildPost(content: ContentProps, proxy?: string) {
             `-# ↪️ Quoting\n${who(quoted.username, quoted.verified, quotedUrl)}` +
               (quoted.takenAt ? ` · <t:${quoted.takenAt}:d>` : "")
           ),
-          text(quote(cut(richText(quoted.caption), 600) + stats)),
+          text(quote(cut(richText(quoted.caption), level.quote) + stats)),
         ],
-        quoted.avatar,
+        quoted.avatar && src("qa"),
         `@${quoted.username}`
       )
     );
     if (quoted.media && quoted.media.length > 0) {
-      children.push(separator(false, 1), gallery(quoted.media, proxy));
+      children.push(
+        separator(false, 1),
+        gallery(quoted.media.slice(0, level.quotedMedia), src, "q")
+      );
     }
   }
 
@@ -175,10 +200,21 @@ function buildPost(content: ContentProps, proxy?: string) {
   );
 
   const container = { type: 17, accent_color: ACCENT_COLOR, components: children };
-  const budget = Math.max(TEXT_BUDGET - textLength(container) - 20, 200);
-  caption.content =
-    cut(richText(content.caption ?? ""), budget) || "-# (no text)";
-  return container;
+  const full = richText(content.caption ?? "");
+  const fits = (n: number) => {
+    caption.content = cut(full, n) || "-# (no text)";
+    return bytes(serialize({ component: container })) <= MAX_BYTES;
+  };
+  // longest caption (in characters) whose serialized payload stays under MAX_BYTES
+  let lo = 0;
+  let hi = full.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (fits(mid)) lo = mid;
+    else hi = mid - 1;
+  }
+  const fitted = fits(lo);
+  return { container, roomy: fitted && lo >= Math.min(full.length, MIN_CAPTION) };
 }
 
 function buildProfile(content: ContentProps) {
@@ -208,16 +244,26 @@ function buildProfile(content: ContentProps) {
   return { type: 17, accent_color: ACCENT_COLOR, components: children };
 }
 
-/** Returns the `discord:component-embed` payload, or null when the type is not supported. */
+/** Returns the serialized `discord:component-embed` payload, or null when the type is not
+    supported or the payload cannot fit in MAX_BYTES (the page then falls back to OG tags). */
 export default function renderComponentEmbed(
   { type, content }: DataProps,
-  proxy?: string
+  origin?: string
 ) {
-  if (type == "post" && content.post) {
-    return { component: buildPost(content, proxy) };
+  let component;
+  if (type == "post" && content.post && origin) {
+    const src: SlotUrl = (slot, kind = "image") =>
+      `${origin}/m/${content.post}/${slot}.${kind == "video" ? "mp4" : "jpg"}`;
+    for (const level of LEVELS) {
+      const built = buildPost(content, src, level);
+      component = built.container;
+      if (built.roomy) break;
+    }
+  } else if (type == "user") {
+    component = buildProfile(content);
+  } else {
+    return null;
   }
-  if (type == "user") {
-    return { component: buildProfile(content) };
-  }
-  return null;
+  const json = serialize({ component });
+  return bytes(json) <= MAX_BYTES ? json : null;
 }

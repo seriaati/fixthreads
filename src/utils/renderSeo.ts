@@ -1,10 +1,11 @@
 import { GlobalVars } from "./utils";
 import renderComponentEmbed from "./renderComponentEmbed";
+import { postMedia } from "./mediaStore";
 import escape from "escape-html";
 
 let proxies = process.env.PROXIES?.split(",") || [];
 
-export default function renderSeo({ type, content }: DataProps) {
+export default function renderSeo({ type, content }: DataProps, origin?: string) {
   if (!type || !content) {
     return "No type/content provided - this is not expected so if you're a client, report this to milan@milanm.org";
   }
@@ -16,11 +17,10 @@ export default function renderSeo({ type, content }: DataProps) {
   let proxy = proxies[Math.floor(Math.random() * proxies.length)];
 
   // Discord Components V2 link preview; built before description is escaped/truncated below
-  const componentEmbed = renderComponentEmbed({ type, content }, proxy);
+  if (type == "post" && content.post) postMedia(content.post, content);
+  const componentEmbed = renderComponentEmbed({ type, content }, origin);
   const componentEmbedTag = componentEmbed
-    ? `<script id="discord:component-embed" type="application/json">${JSON.stringify(
-        componentEmbed
-      ).replace(/</g, "\\u003c")}</script>`
+    ? `<script id="discord:component-embed" type="application/json">${componentEmbed}</script>`
     : "";
 
   let videoURL = "";

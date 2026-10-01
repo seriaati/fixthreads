@@ -20,7 +20,7 @@ router.get("/t/:post", async (req, res, _next) => {
       console.log(`[NOT FOUND] post=${post}`);
       return res.redirect(threadsPostUrl(undefined, post));
     }
-    return res.send(renderSeo({ type: "post", content: data }));
+    return res.send(renderSeo({ type: "post", content: data }, `https://${req.get("host")}`));
   } catch (e: any) {
     console.error(`[ERROR] post=${post}`, e?.message ?? e);
     return res.redirect(threadsPostUrl(undefined, post));
@@ -43,7 +43,7 @@ router.get("/share/:share", async (req, res, _next) => {
       console.log(`[NOT FOUND] share=${share} post=${resolved.post}`);
       return res.redirect(threadsPostUrl(resolved.username, resolved.post));
     }
-    return res.send(renderSeo({ type: "post", content: data }));
+    return res.send(renderSeo({ type: "post", content: data }, `https://${req.get("host")}`));
   } catch (e: any) {
     console.error(`[ERROR] share=${share}`, e?.message ?? e);
     return res.redirect(`https://www.threads.com/share/${share}/`);
@@ -61,7 +61,7 @@ router.get("/:username/post/:post", async (req, res, _next) => {
       console.log(`[NOT FOUND] username=${username} post=${post}`);
       return res.redirect(threadsPostUrl(username, post));
     }
-    return res.send(renderSeo({ type: "post", content: data }));
+    return res.send(renderSeo({ type: "post", content: data }, `https://${req.get("host")}`));
   } catch (e: any) {
     console.error(`[ERROR] username=${username} post=${post}`, e?.message ?? e);
     return res.redirect(threadsPostUrl(username, post));

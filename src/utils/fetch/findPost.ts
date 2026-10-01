@@ -11,12 +11,12 @@ function extractMedia(post: any): MediaItem[] {
   if (post.carousel_media && post.carousel_media.length > 0) {
     return post.carousel_media.map((item: any) =>
       item.video_versions && item.video_versions.length > 0
-        ? { url: item.video_versions[0].url, kind: "video" }
+        ? { url: item.video_versions[0].url, kind: "video", poster: item.image_versions2?.candidates?.[0]?.url }
         : { url: item.image_versions2.candidates[0].url, kind: "image" }
     );
   }
   if (post.video_versions && post.video_versions.length > 0) {
-    return [{ url: post.video_versions[0].url, kind: "video" }];
+    return [{ url: post.video_versions[0].url, kind: "video", poster: post.image_versions2?.candidates?.[0]?.url }];
   }
   if (post.image_versions2?.candidates?.length > 0) {
     return [{ url: post.image_versions2.candidates[0].url, kind: "image" }];

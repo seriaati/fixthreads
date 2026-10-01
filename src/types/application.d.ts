@@ -12,7 +12,6 @@ interface VideoProps {
 interface MediaItem {
   url: string;
   kind: "image" | "video";
-  poster?: string;
 }
 
 interface ReplyToProps {

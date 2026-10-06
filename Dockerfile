@@ -1,14 +1,9 @@
-FROM node:lts-alpine AS base
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-
-FROM base AS deps
+FROM oven/bun:1-alpine AS deps
 WORKDIR /build
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-FROM base AS prod
+FROM node:lts-alpine AS prod
 LABEL org.opencontainers.image.description "Fixes Meta's Threads metadata for sites like Discord, Telegram, etc."
 LABEL org.opencontainers.image.source "https://github.com/seriaati/fixthreads"
 

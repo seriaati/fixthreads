@@ -1,9 +1,4 @@
-import fetch from "node-fetch";
-import { HttpsProxyAgent } from "https-proxy-agent";
-
-const proxyAgent = process.env.API_PROXY
-  ? new HttpsProxyAgent(process.env.API_PROXY)
-  : undefined;
+const proxy = process.env.API_PROXY;
 
 const MAX_HOPS = 5;
 const BROWSER_UA =
@@ -31,7 +26,7 @@ async function resolveShare(share: string) {
   for (let hop = 0; hop < MAX_HOPS; hop++) {
     const res = await fetch(url, {
       redirect: "manual",
-      agent: proxyAgent,
+      proxy,
     });
     const location = res.headers.get("location");
     if (!location) {
@@ -53,8 +48,7 @@ async function resolveShare(share: string) {
   try {
     const res = await fetch(shareUrl, {
       redirect: "follow",
-      follow: MAX_HOPS,
-      agent: proxyAgent,
+      proxy,
       headers: { "User-Agent": BROWSER_UA },
     });
     const fromFinalUrl = matchPostUrl(res.url);

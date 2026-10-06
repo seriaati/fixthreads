@@ -3,8 +3,8 @@
   "version": "1.7.7",
   "main": "index.ts",
   "scripts": {
-    "start": "tsx ./src/index.ts",
-    "dev": "tsx --watch ./src/index.ts",
+    "start": "bun ./src/index.ts",
+    "dev": "bun --watch ./src/index.ts",
     "cloudflare": "cloudflared tunnel --config ./cloudflare.yaml run",
     "docker": "bash ./build.sh"
   },
@@ -15,13 +15,12 @@
     "escape-html": "^1.0.3",
     "express": "^5.2.1",
     "express-rate-limit": "8.2.1",
-    "https-proxy-agent": "^9.0.0",
     "instagram-private-api": "^1.46.1",
     "node-fetch": "^3.3.2",
-    "threads-api": "^1.6.3",
-    "tsx": "4.21.0"
+    "threads-api": "^1.6.3"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.2",
     "@types/cors": "^2.8.19",
     "@types/escape-html": "^1.0.4",
     "@types/express": "^5.0.6",

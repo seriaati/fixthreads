@@ -1,10 +1,6 @@
-import fetch from "node-fetch";
-import { HttpsProxyAgent } from "https-proxy-agent";
 import { login, refreshToken } from "./igLogin";
 
-const proxyAgent = process.env.API_PROXY
-  ? new HttpsProxyAgent(process.env.API_PROXY)
-  : undefined;
+const proxy = process.env.API_PROXY;
 
 /* Ordered list of a post's own media (carousel items, single video or single image) */
 function extractMedia(post: any): MediaItem[] {
@@ -69,7 +65,7 @@ async function findPost({
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: finalFormBody,
-    agent: proxyAgent,
+    proxy,
   });
   let fetchThreadsAPIJson: any = await fetchThreadsAPI.json();
 
@@ -100,7 +96,7 @@ async function findPost({
               Authorization: newToken.token ? newToken.token : "",
             },
             body: finalFormBody,
-            agent: proxyAgent,
+            proxy,
           });
           fetchThreadsAPIJson = await fetchWithAuth.json();
         }

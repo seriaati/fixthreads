@@ -340,6 +340,17 @@ async function findPost({
           caption: parentPost.caption != null ? parentPost.caption.text : "",
         }
       : undefined,
+    poll:
+      poll && poll.tallies && poll.tallies.length > 0
+        ? {
+            options: poll.tallies.map((tally: any) => ({
+              text: tally.text,
+              count: tally.count,
+            })),
+            finished: poll.finished ?? false,
+            expiresAt: poll.expires_at ?? undefined,
+          }
+        : undefined,
   };
 
   return returnJson;

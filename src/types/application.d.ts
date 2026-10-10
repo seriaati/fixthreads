@@ -21,6 +21,12 @@ interface ReplyToProps {
   caption: string;
 }
 
+interface PollProps {
+  options: { text: string; count: number }[];
+  finished: boolean;
+  expiresAt?: number;
+}
+
 interface ContentProps {
   description: string;
   title: string;
@@ -44,6 +50,7 @@ interface ContentProps {
   edited?: boolean;
   paidPartnership?: boolean;
   replyTo?: ReplyToProps;
+  poll?: PollProps;
   // Components V2 embed data (users)
   fullName?: string;
   followerCount?: number;

@@ -107,16 +107,43 @@ function gallery(media: MediaItem[], src: SlotUrl, prefix = "") {
   };
 }
 
+const POLL_BAR = 10;
+
+/** Vote total + status line, then one `█░` bar per option; the leading option is bolded. */
+function pollText(poll: PollProps, bars: boolean) {
+  const total = poll.options.reduce((sum, o) => sum + o.count, 0);
+  const top = Math.max(...poll.options.map((o) => o.count));
+  const ended = poll.finished || (poll.expiresAt && poll.expiresAt <= Date.now() / 1000);
+  const status = ended
+    ? " · Final results"
+    : poll.expiresAt
+      ? ` · Ends <t:${poll.expiresAt}:R>`
+      : "";
+  const lines = poll.options.map((o) => {
+    const share = total > 0 ? o.count / total : 0;
+    const filled = Math.round(share * POLL_BAR);
+    const label = `${escapeMarkdown(o.text)} · ${Math.round(share * 100)}%`;
+    return (
+      (bars ? `\`${"█".repeat(filled)}${"░".repeat(POLL_BAR - filled)}\` ` : "") +
+      (total > 0 && o.count == top ? `**${label}**` : label)
+    );
+  });
+  return (
+    `-# 📊 ${num(total)} vote${total == 1 ? "" : "s"}${status}\n` +
+    lines.join("\n")
+  );
+}
+
 const serialize = (payload: unknown) =>
   JSON.stringify(payload).replace(/</g, "\\u003c");
 const bytes = (s: string) => Buffer.byteLength(s, "utf8");
 
 /* Reply/quote limits, tried in order until the main caption gets at least MIN_CAPTION characters. */
-type Level = { reply: number; quote: number; quotedMedia: number };
+type Level = { reply: number; quote: number; quotedMedia: number; pollBars: boolean };
 const LEVELS: Level[] = [
-  { reply: 150, quote: 300, quotedMedia: 10 },
-  { reply: 100, quote: 150, quotedMedia: 4 },
-  { reply: 50, quote: 80, quotedMedia: 1 },
+  { reply: 150, quote: 300, quotedMedia: 10, pollBars: true },
+  { reply: 100, quote: 150, quotedMedia: 4, pollBars: true },
+  { reply: 50, quote: 80, quotedMedia: 1, pollBars: false },
 ];
 const MIN_CAPTION = 280;
 
@@ -149,6 +176,10 @@ function buildPost(content: ContentProps, src: SlotUrl, level: Level) {
 
   if (content.media && content.media.length > 0) {
     children.push(separator(false, 2), gallery(content.media, src));
+  }
+
+  if (content.poll) {
+    children.push(separator(false, 2), text(pollText(content.poll, level.pollBars)));
   }
 
   const quoted = content.quotedPost;

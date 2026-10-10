@@ -153,6 +153,26 @@ async function findPost({
   }
   let description = caption;
 
+  /* Handle Polls */
+  let poll = postObj.post.caption_add_on?.poll;
+  if (poll && poll.tallies && poll.tallies.length > 0) {
+    let totalVotes = poll.tallies.reduce(
+      (sum: number, tally: any) => sum + tally.count,
+      0
+    );
+    let pollText =
+      `📊 ${totalVotes.toLocaleString()} vote${totalVotes == 1 ? "" : "s"}` +
+      (poll.finished ? " · Final results" : "") +
+      "\n" +
+      poll.tallies
+        .map((tally: any) => {
+          let percent = totalVotes > 0 ? Math.round((tally.count / totalVotes) * 100) : 0;
+          return `${tally.text}: ${percent}% (${tally.count.toLocaleString()})`;
+        })
+        .join("\n");
+    description = description ? `${description}\n\n${pollText}` : pollText;
+  }
+
   /* Setup oEmbed */
   let oembedStat = `❤️ ${postObj.post.like_count.toLocaleString()} like${
     postObj.post.like_count > 1 || postObj.post.like_count == 0 ? "s" : ""

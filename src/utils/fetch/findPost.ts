@@ -146,11 +146,15 @@ async function findPost({
   const postIndex = thread_items.findIndex(
     (item: any) => item.post.code == post
   );
-  const parentPost = postIndex > 0 ? thread_items[postIndex - 1].post : null;
+  const parentPost =
+    postIndex > 0 && thread_items[postIndex - 1].post.user != null
+      ? thread_items[postIndex - 1].post
+      : null;
 
   /* Handle Captions */
   let caption;
-  if (index > 1) {
+  // The parent's user is null when the replied-to post is unavailable
+  if (index > 1 && thread_items[index - 2].post.user != null) {
     caption =
       `⤴️ Replying to @${thread_items[index - 2].post.user.username}` +
       `\n\n` +

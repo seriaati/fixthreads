@@ -105,7 +105,7 @@ async function findPost({
               Authorization: newToken.token ? newToken.token : "",
             },
             body: finalFormBody,
-            proxy,
+            // No proxy: the account should keep the server's IP it logged in from
           });
           fetchThreadsAPIJson = await fetchWithAuth.json();
         }

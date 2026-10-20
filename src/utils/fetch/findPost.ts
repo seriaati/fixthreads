@@ -20,6 +20,10 @@ function extractMedia(post: any): MediaItem[] {
   return [];
 }
 
+function hasPost(json: any): boolean {
+  return json?.data?.data?.edges?.length > 0;
+}
+
 async function findPost({
   post,
   userAgent,
@@ -69,8 +73,13 @@ async function findPost({
   });
   let fetchThreadsAPIJson: any = await fetchThreadsAPI.json();
 
-  if (fetchThreadsAPIJson.errors && fetchThreadsAPIJson.errors.length > 0) {
+  // Login-gated posts come back as an empty edges list, throttled requests as a null body
+  if (
+    (fetchThreadsAPIJson?.errors && fetchThreadsAPIJson.errors.length > 0) ||
+    !hasPost(fetchThreadsAPIJson)
+  ) {
     if (
+      !fetchThreadsAPIJson?.errors?.length ||
       fetchThreadsAPIJson.errors[0].summary == "Not Logged In" ||
       fetchThreadsAPIJson.errors[0].summary == "Not Found" ||
       (fetchThreadsAPIJson.errors[0].message &&
@@ -105,14 +114,13 @@ async function findPost({
       }
 
       if (
-        (fetchThreadsAPIJson.errors && fetchThreadsAPIJson.errors.length > 0) ||
+        (fetchThreadsAPIJson?.errors && fetchThreadsAPIJson.errors.length > 0) ||
         generalFetchAuthErr
       ) {
         if (
-          fetchThreadsAPIJson.errors[0].summary == "Not Logged In" ||
-          fetchThreadsAPIJson.errors[0].api_error_code == 368 || // you're temporarily blocked error code
-          (fetchThreadsAPIJson.errors[0].message &&
-            fetchThreadsAPIJson.errors[0].message.includes("limit exceeded")) ||
+          fetchThreadsAPIJson?.errors?.[0]?.summary == "Not Logged In" ||
+          fetchThreadsAPIJson?.errors?.[0]?.api_error_code == 368 || // you're temporarily blocked error code
+          fetchThreadsAPIJson?.errors?.[0]?.message?.includes("limit exceeded") ||
           generalFetchAuthErr
         ) {
           console.log(
@@ -125,9 +133,8 @@ async function findPost({
     } else {
       return false;
     }
-  } else if (!fetchThreadsAPIJson.data) {
-    return false;
   }
+  if (!hasPost(fetchThreadsAPIJson)) return false;
 
   /* Handle Post Finding */
   let thread_items = fetchThreadsAPIJson.data.data.edges[0].node.thread_items;

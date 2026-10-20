@@ -11,8 +11,10 @@ let tokenStore = {
   timestamp: 0,
   username: "",
 };
-let failedCredentials: string[] = [];
-let runningLogin = false;
+// Concurrent callers share one in-flight login; after every account fails, wait before retrying
+const LOGIN_RETRY_AFTER = 10 * 60 * 1000;
+let pendingLogin: Promise<typeof tokenStore | false> | null = null;
+let lastLoginFailure = 0;
 let hasReadTokenFile = false;
 
 const generatedDir = __dirname + "/../../../generated";
@@ -61,39 +63,36 @@ function writeTokenFile() {
     return false;
   }
 }*/
-async function runIgLogin() {
-  if (runningLogin) return false;
-  if (!users.length) return false;
-  let filteredArray = users.filter(
-    (user) => !failedCredentials.includes(user.username)
-  );
-  let trialUser = filteredArray[0];
-
+async function runIgLogin(trialUser: (typeof users)[number]) {
   try {
-    runningLogin = true;
     const threads = new ThreadsAPI({
       username: trialUser.username,
       password: trialUser.password,
       deviceID: trialUser.deviceId || undefined,
     });
     await threads.login();
-    if (!threads.token) {
-      failedCredentials.push(trialUser.username);
-      return false;
-    }
+    if (!threads.token) return false;
 
     tokenStore = {
       token: "Bearer IGT:2:" + threads.token,
       timestamp: Date.now(),
       username: trialUser.username,
     };
-    runningLogin = false;
     writeTokenFile();
     return tokenStore;
   } catch (e) {
-    console.error(e);
+    console.error(`[LOGIN] failed for ${trialUser.username}`, e);
     return false;
   }
+}
+
+async function loginAnyUser() {
+  for (const user of users) {
+    const result = await runIgLogin(user);
+    if (result) return result;
+  }
+  lastLoginFailure = Date.now();
+  return false;
 }
 
 async function login(retrieveOnly: boolean = false) {
@@ -107,20 +106,12 @@ async function login(retrieveOnly: boolean = false) {
     return tokenStore;
   }
 
-  if (tokenStore.token) {
-    return tokenStore;
-  } else {
-    let runLogin = await runIgLogin();
-    if (runLogin == false) {
-      if (failedCredentials.length == users.length) {
-        return false;
-      } else {
-        return await login();
-      }
-    } else {
-      return runLogin;
-    }
+  if (tokenStore.token) return tokenStore;
+  if (!users.length || Date.now() - lastLoginFailure < LOGIN_RETRY_AFTER) {
+    return false;
   }
+  pendingLogin ??= loginAnyUser().finally(() => (pendingLogin = null));
+  return await pendingLogin;
 }
 
 async function refreshToken() {

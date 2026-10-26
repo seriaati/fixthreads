@@ -50,7 +50,8 @@ router.get("/share/:share", async (req, res, _next) => {
   }
 });
 
-router.get("/:username/post/:post", async (req, res, _next) => {
+// Threads may append a title slug after the post code: /@user/post/CODE/some-title
+router.get("/:username/post/:post{/*slug}", async (req, res, _next) => {
   const { username, post } = req.params;
   try {
     const data = await findPost({

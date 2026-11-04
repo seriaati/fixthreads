@@ -70,6 +70,15 @@ async function runIgLogin(trialUser: (typeof users)[number]) {
       password: trialUser.password,
       deviceID: trialUser.deviceId || undefined,
     });
+    // threads-api reads the password encryption key from /qe/sync/ response headers, but that
+    // endpoint now 404s; /launcher/sync/ still sends the same headers (even on a 400)
+    (threads as any).syncLoginExperiments = async () => {
+      const res = await fetch("https://i.instagram.com/api/v1/launcher/sync/", {
+        method: "POST",
+        headers: (threads as any)._getAppHeaders(),
+      });
+      return { headers: Object.fromEntries(res.headers) };
+    };
     await threads.login();
     if (!threads.token) return false;
 

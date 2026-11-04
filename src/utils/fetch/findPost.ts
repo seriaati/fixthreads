@@ -2,7 +2,8 @@ import { login, refreshToken } from "./igLogin";
 
 const proxy = process.env.API_PROXY;
 
-/* Ordered list of a post's own media (carousel items, single video or single image) */
+/* Ordered list of a post's own media (carousel items, single video or single image),
+   falling back to the link preview card's image for link-only posts */
 function extractMedia(post: any): MediaItem[] {
   if (post.carousel_media && post.carousel_media.length > 0) {
     return post.carousel_media.map((item: any) =>
@@ -17,6 +18,8 @@ function extractMedia(post: any): MediaItem[] {
   if (post.image_versions2?.candidates?.length > 0) {
     return [{ url: post.image_versions2.candidates[0].url, kind: "image" }];
   }
+  const preview = post.text_post_app_info?.link_preview_attachment?.image_url;
+  if (preview) return [{ url: preview, kind: "image" }];
   return [];
 }
 

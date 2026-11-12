@@ -5,6 +5,26 @@ const users: { username: string; password: string; deviceId?: string }[] = fs.ex
   ? JSON.parse(fs.readFileSync(usersPath, "utf-8"))
   : [];
 import { ThreadsAPI } from "threads-api";
+// Resolve from threads-api's location so this is the exact axios instance it sends requests with
+const axios = require(require.resolve("axios", { paths: [require.resolve("threads-api")] }));
+
+// threads-api throws a bare "Login Failed" and discards Instagram's response; keep it to log why
+let lastLoginResponse = "";
+axios.interceptors.response.use((res: any) => {
+  if (res.config?.url?.includes("send_login_request")) lastLoginResponse = String(res.data);
+  return res;
+});
+
+function describeLoginResponse() {
+  if (!lastLoginResponse) return "";
+  const text = lastLoginResponse.replaceAll("\\", "");
+  const hints = new Set(
+    text.match(
+      /"(error_type|error_title|error_message|message|exception_name|checkpoint_url|challenge_url)":"[^"]{1,200}"/g
+    )
+  );
+  return hints.size > 0 ? [...hints].join(" ") : text.slice(0, 500);
+}
 
 let tokenStore = {
   token: "",
@@ -64,6 +84,7 @@ function writeTokenFile() {
   }
 }*/
 async function runIgLogin(trialUser: (typeof users)[number]) {
+  lastLoginResponse = "";
   try {
     const threads = new ThreadsAPI({
       username: trialUser.username,
@@ -90,7 +111,9 @@ async function runIgLogin(trialUser: (typeof users)[number]) {
     writeTokenFile();
     return tokenStore;
   } catch (e) {
-    console.error(`[LOGIN] failed for ${trialUser.username}`, e);
+    console.error(
+      `[LOGIN] failed for ${trialUser.username}: ${(e as any)?.message ?? e} ${describeLoginResponse()}`
+    );
     return false;
   }
 }

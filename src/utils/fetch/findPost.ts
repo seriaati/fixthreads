@@ -185,13 +185,18 @@ async function findPost({
       0
     );
     let pollText =
-      `📊 ${totalVotes.toLocaleString()} vote${totalVotes == 1 ? "" : "s"}` +
+      (poll.percent_only
+        ? "📊 Poll"
+        : `📊 ${totalVotes.toLocaleString()} vote${totalVotes == 1 ? "" : "s"}`) +
       (poll.finished ? " · Final results" : "") +
       "\n" +
       poll.tallies
         .map((tally: any) => {
           let percent = totalVotes > 0 ? Math.round((tally.count / totalVotes) * 100) : 0;
-          return `${tally.text}: ${percent}% (${tally.count.toLocaleString()})`;
+          return (
+            `${tally.text}: ${percent}%` +
+            (poll.percent_only ? "" : ` (${tally.count.toLocaleString()})`)
+          );
         })
         .join("\n");
     description = description ? `${description}\n\n${pollText}` : pollText;
@@ -373,6 +378,7 @@ async function findPost({
             })),
             finished: poll.finished ?? false,
             expiresAt: poll.expires_at ?? undefined,
+            percentOnly: poll.percent_only ?? false,
           }
         : undefined,
   };

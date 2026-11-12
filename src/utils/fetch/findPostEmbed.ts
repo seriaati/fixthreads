@@ -46,6 +46,7 @@ interface EmbedPost {
   media: MediaItem[];
   link: { url: string; image_url?: string } | null;
   quoted: EmbedPost | null;
+  poll: object | null;
 }
 
 const newPost = (isTarget: boolean): EmbedPost => ({
@@ -60,6 +61,7 @@ const newPost = (isTarget: boolean): EmbedPost => ({
   media: [],
   link: null,
   quoted: null,
+  poll: null,
 });
 
 function toGraphQLPost(p: EmbedPost, code?: string): any {
@@ -75,6 +77,7 @@ function toGraphQLPost(p: EmbedPost, code?: string): any {
     caption_is_edited: p.edited,
     like_count: counts[0] ?? 0,
     taken_at: parseTimestamp(decode(p.timestamp)),
+    caption_add_on: p.poll ? { poll: p.poll } : undefined,
     carousel_media: p.media.length > 1 ? p.media.map(mediaNode) : null,
     ...mediaNode(p.media.length == 1 ? p.media[0] : undefined),
     text_post_app_info: {
@@ -176,6 +179,28 @@ async function findPostEmbed(post: string) {
   if (quoted && !quoted.text && quotedMarkup) {
     quoted.text = JSON.parse(quotedMarkup).replace(/<[^>]+>/g, "");
   }
+
+  // Polls are rendered by a script from its props. They carry percentages but no per-option
+  // votes, and the total looks capped, so counts are only relative weights (percent_only).
+  const pollProps = html.match(
+    /"props":\{"poll":(\{.*?\}),"secondsUntilExpiration":(-?\d+)/
+  );
+  if (pollProps) {
+    const poll = JSON.parse(pollProps[1]);
+    const secondsLeft = Number(pollProps[2]);
+    if (poll.showResults) {
+      posts[target].poll = {
+        tallies: poll.formattedOptions.map((o: any) => ({
+          text: o.text,
+          count: Math.round(o.percentage * 1000),
+        })),
+        finished: poll.isFinished,
+        expires_at: secondsLeft > 0 ? Math.round(Date.now() / 1000 + secondsLeft) : undefined,
+        percent_only: true,
+      };
+    }
+  }
+
   const thread_items = posts
     .slice(0, target + 1)
     .map((p, i) => ({ post: toGraphQLPost(p, i == target ? post : undefined) }));

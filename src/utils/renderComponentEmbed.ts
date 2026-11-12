@@ -129,7 +129,7 @@ function pollText(poll: PollProps, bars: boolean) {
     );
   });
   return (
-    `-# 📊 ${num(total)} vote${total == 1 ? "" : "s"}${status}\n` +
+    `-# 📊 ${poll.percentOnly ? "Poll" : `${num(total)} vote${total == 1 ? "" : "s"}`}${status}\n` +
     lines.join("\n")
   );
 }

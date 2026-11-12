@@ -25,6 +25,8 @@ interface PollProps {
   options: { text: string; count: number }[];
   finished: boolean;
   expiresAt?: number;
+  // Embed-page fallback: counts are relative weights, not votes
+  percentOnly?: boolean;
 }
 
 interface ContentProps {

@@ -1,4 +1,4 @@
-import { login, refreshToken } from "./igLogin";
+import findPostLoggedIn from "./findPostLoggedIn";
 import findPostEmbed from "./findPostEmbed";
 
 const proxy = process.env.API_PROXY;
@@ -86,65 +86,12 @@ async function findPost({
     }
   }
 
-  // Login-gated posts come back as an empty edges list, throttled requests as a null body
-  if (
-    (fetchThreadsAPIJson?.errors && fetchThreadsAPIJson.errors.length > 0) ||
-    !hasPost(fetchThreadsAPIJson)
-  ) {
-    if (
-      !fetchThreadsAPIJson?.errors?.length ||
-      fetchThreadsAPIJson.errors[0].summary == "Not Logged In" ||
-      fetchThreadsAPIJson.errors[0].summary == "Not Found" ||
-      (fetchThreadsAPIJson.errors[0].message &&
-        fetchThreadsAPIJson.errors[0].message.includes("limit exceeded"))
-    ) {
-      let fetchWithAuth: any;
-      let generalFetchAuthErr = false;
-      try {
-        let newToken = await login();
-        if (newToken == false) {
-          return false;
-        } else {
-          fetchWithAuth = await fetch(`https://www.threads.com/api/graphql`, {
-            method: "POST",
-            headers: {
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": " same-origin",
-              "User-Agent":
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-              "X-Fb-Lsd": "hgmSkqDnLNFckqa7t1vJdn",
-              "X-Ig-App-Id": "238260118697367",
-              "Content-Type": "application/x-www-form-urlencoded",
-              Authorization: newToken.token ? newToken.token : "",
-            },
-            body: finalFormBody,
-            // No proxy: the account should keep the server's IP it logged in from
-          });
-          fetchThreadsAPIJson = await fetchWithAuth.json();
-        }
-      } catch (e) {
-        generalFetchAuthErr = true;
-      }
-
-      if (
-        (fetchThreadsAPIJson?.errors && fetchThreadsAPIJson.errors.length > 0) ||
-        generalFetchAuthErr
-      ) {
-        if (
-          fetchThreadsAPIJson?.errors?.[0]?.summary == "Not Logged In" ||
-          fetchThreadsAPIJson?.errors?.[0]?.api_error_code == 368 || // you're temporarily blocked error code
-          fetchThreadsAPIJson?.errors?.[0]?.message?.includes("limit exceeded") ||
-          generalFetchAuthErr
-        ) {
-          console.log(
-            `Error using token. Requesting new token... ${new Date().toLocaleString()} ${post}`
-          );
-          let tokenRefresh = await refreshToken();
-          if (tokenRefresh == false) return false;
-        }
-      }
-    } else {
-      return false;
+  // Posts hidden from logged-out viewers need a logged-in session
+  if (!hasPost(fetchThreadsAPIJson)) {
+    const fromSession = await findPostLoggedIn(post).catch(() => null);
+    if (fromSession) {
+      console.log(`[SESSION] post=${post}`);
+      fetchThreadsAPIJson = fromSession;
     }
   }
   if (!hasPost(fetchThreadsAPIJson)) return false;

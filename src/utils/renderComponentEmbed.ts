@@ -163,8 +163,10 @@ function buildPost(content: ContentProps, src: SlotUrl, level: Level) {
       (content.replyTo.code ? `/post/${content.replyTo.code}` : "");
     headerTexts.push(
       text(
-        `-# ↩️ Replying to ${who(content.replyTo.username, content.replyTo.verified, parentUrl)}\n` +
-          quote(cut(richText(content.replyTo.caption), level.reply))
+        `-# ↩️ Replying to ${who(content.replyTo.username, content.replyTo.verified, parentUrl)}` +
+          (content.replyTo.caption
+            ? "\n" + quote(cut(richText(content.replyTo.caption), level.reply))
+            : "")
       )
     );
   }

@@ -157,7 +157,10 @@ function buildPost(content: ContentProps, src: SlotUrl, level: Level) {
     ),
   ];
   if (content.replyTo) {
-    const parentUrl = `${THREADS}/@${content.replyTo.username}/post/${content.replyTo.code}`;
+    // The embed-page fallback has no post code for the parent or the quoted post
+    const parentUrl =
+      `${THREADS}/@${content.replyTo.username}` +
+      (content.replyTo.code ? `/post/${content.replyTo.code}` : "");
     headerTexts.push(
       text(
         `-# ↩️ Replying to ${who(content.replyTo.username, content.replyTo.verified, parentUrl)}\n` +
@@ -186,7 +189,8 @@ function buildPost(content: ContentProps, src: SlotUrl, level: Level) {
   if (quoted?.unavailable) {
     children.push(separator(true, 2), text("-# ↪️ Quoted post is unavailable"));
   } else if (quoted?.quoted) {
-    const quotedUrl = `${THREADS}/@${quoted.username}/post/${quoted.code}`;
+    const quotedUrl =
+      `${THREADS}/@${quoted.username}` + (quoted.code ? `/post/${quoted.code}` : "");
     const stats = `\n-# ❤️ ${num(quoted.likeCount ?? 0)} · 💬 ${num(quoted.replyCount ?? 0)}`;
     children.push(
       separator(true, 2),

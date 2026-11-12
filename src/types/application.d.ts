@@ -17,7 +17,7 @@ interface MediaItem {
 interface ReplyToProps {
   username: string;
   verified: boolean;
-  code: string;
+  code?: string;
   caption: string;
 }
 

@@ -1,4 +1,5 @@
 import { login, refreshToken } from "./igLogin";
+import findPostEmbed from "./findPostEmbed";
 
 const proxy = process.env.API_PROXY;
 
@@ -75,6 +76,15 @@ async function findPost({
     proxy,
   });
   let fetchThreadsAPIJson: any = await fetchThreadsAPI.json();
+
+  // Throttled or errored: the official embed page still serves most public posts logged out
+  if (!hasPost(fetchThreadsAPIJson)) {
+    const fromEmbed = await findPostEmbed(post).catch(() => null);
+    if (fromEmbed) {
+      console.log(`[EMBED] post=${post}`);
+      fetchThreadsAPIJson = fromEmbed;
+    }
+  }
 
   // Login-gated posts come back as an empty edges list, throttled requests as a null body
   if (

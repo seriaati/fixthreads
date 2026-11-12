@@ -5,7 +5,8 @@ import renderSeo from "../utils/renderSeo";
 const router = express.Router();
 
 function threadsPostUrl(username: string | undefined, post: string) {
-  if (username) return `https://www.threads.com/@${username}/post/${post}`;
+  // The /:username route param already carries the "@"; resolveShare's username doesn't
+  if (username) return `https://www.threads.com/@${username.replace(/^@/, "")}/post/${post}`;
   return `https://www.threads.com/t/${post}`;
 }
 
